@@ -39,6 +39,11 @@ class TaskRepository {
     console.log(status,"...status")
     return await Task.findByIdAndUpdate(id,status,{new:true,runValidators:true})
   }
+
+
+  getCountOFAllRecords=async()=>{
+   return await Task.find({});
+  }
 }
 
 export default new TaskRepository();

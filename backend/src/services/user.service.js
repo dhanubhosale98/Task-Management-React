@@ -8,6 +8,7 @@ import {
 } from "../utils/index.js";
 import jwt from "jsonwebtoken";
 import config from "../config/env.js";
+import Refresh from "../models/refreshToken.model.js";
 // import { use } from "react";
 
 class UserService {
@@ -19,6 +20,7 @@ class UserService {
       if (result) {
         const token = await generateAccessToken({ id: user._id });
         const refreshToken = await generateRefreshToken({ id: user._id });
+        await Refresh.create({ userId: user._id, token: refreshToken });
         console.log(refreshToken, "....refreshToken");
 
         return [user, token, refreshToken];
@@ -36,21 +38,61 @@ class UserService {
   }
 
   async getAccessToken(token) {
+    // 1. Refresh token must exist
     if (!token) {
       throw new ApiError(httpStatus.UNAUTHORIZED, "Refresh token is required.");
     }
 
+    // 2. Verify JWT
     const refresh = await verifyRefreshToken(token);
 
     if (!refresh?.id) {
       throw new ApiError(httpStatus.UNAUTHORIZED, "Invalid refresh token.");
     }
 
+    // 3. Atomically consume the refresh token
+    const refreshRecord = await Refresh.findOneAndUpdate(
+      {
+        token: token,
+        isUsed: false,
+      },
+      {
+        $set: {
+          isUsed: true,
+        },
+      },
+      {
+        new: true,
+      },
+    );
+
+    // 4. Token doesn't exist OR was already used
+    if (!refreshRecord) {
+      throw new ApiError(
+        httpStatus.UNAUTHORIZED,
+        "Invalid or already used refresh token.",
+      );
+    }
+
+    // 5. Generate new refresh token
+    const newRefreshToken = await generateRefreshToken({
+      id: refresh.id,
+    });
+
+    // 6. Store new refresh token
+    await Refresh.create({
+      userId: refresh.id,
+      token: newRefreshToken,
+      isUsed: false,
+    });
+
+    // 7. Generate new access token
     const accessToken = generateAccessToken({
       id: refresh.id,
     });
 
-    return accessToken;
+    // 8. Return both
+    return [accessToken, newRefreshToken];
   }
 
   async createUser(userData) {

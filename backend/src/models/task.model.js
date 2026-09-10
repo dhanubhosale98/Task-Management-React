@@ -32,7 +32,7 @@ let taskSchema = mongoose.Schema(
       enum: ["LOW", "MEDIUM", "HIGH"],
       default: "LOW",
     },
-    
+
     hasSubTask: {
       type: Boolean,
       default: false,
@@ -57,6 +57,34 @@ let taskSchema = mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    attachments: [
+      {
+        originalName: {
+          type: String,
+          required: true,
+        },
+
+        fileName: {
+          type: String,
+          required: true,
+        },
+
+        filePath: {
+          type: String,
+          required: true,
+        },
+
+        mimeType: {
+          type: String,
+          required: true,
+        },
+
+        size: {
+          type: Number,
+          required: true,
+        },
+      },
+    ],
   },
   {
     timestamps: true,

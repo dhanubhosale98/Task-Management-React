@@ -13,7 +13,7 @@ export default function Layout() {
           <AppSidebar />
 
           <main className="flex-1">
-            <div className="block flex justify-start xl:hidden">
+            <div className=" flex justify-start xl:hidden">
               <SidebarTrigger />
             </div>
             <div className="px-4 w-dvw lg:w-6xl lg:mx-auto">
