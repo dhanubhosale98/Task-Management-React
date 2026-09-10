@@ -6,22 +6,29 @@ import cookieParser from "cookie-parser";
 
 import routes from "./routes/index.js";
 import {
-//   notFound,
+  //   notFound,
   errorHandler,
 } from "./middlewares/index.js";
+import path from "node:path";
 
 const app = express();
 
 /**
  * Security Middleware
  */
-app.use(helmet());
-app.use(cors(
+app.use(helmet(
   {
-    origin: "http://localhost:5173",
-    credentials: true,
+    crossOriginResourcePolicy: {
+      policy: "cross-origin",
+    },
   }
 ));
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  }),
+);
 
 /**
  * Request Logging
@@ -38,7 +45,7 @@ app.use(express.urlencoded({ extended: true }));
  * Cookie Parser
  */
 app.use(cookieParser());
-
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 /**
  * Routes
  */

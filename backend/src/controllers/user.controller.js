@@ -18,8 +18,15 @@ class UserController {
   });
 
   getAccessToken = asyncHandler(async (req, res) => {
-    const refreshToken = req.cookies?.refreshToken;
-    const accessToken = await userService.getAccessToken(refreshToken);
+    const refreshTokenFrmCookie = req.cookies?.refreshToken;
+    const [accessToken, refreshToken] =
+      await userService.getAccessToken(refreshTokenFrmCookie);
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
 
     return ApiResponse.success(
       res,

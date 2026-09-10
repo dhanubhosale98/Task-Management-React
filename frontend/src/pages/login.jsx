@@ -47,7 +47,7 @@ export function Login() {
   return (
     <>
       <div>
-        <Card className="w-full max-w-xs hover:shadow-sm hover:shadow-gray-700">
+        <Card className=" min-w-xs hover:shadow-sm hover:shadow-gray-700">
           <CardContent>
             <form onSubmit={handleSubmit(onSubmit)}>
               <FieldGroup>

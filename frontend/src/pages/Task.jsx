@@ -36,6 +36,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { EditViewTaskDrawer } from "@/components/editViewTask";
 export function Task() {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState("create");
@@ -43,7 +44,7 @@ export function Task() {
   const [editData, setEditData] = useState({});
   const [isFormSubmitted, setIsFormSubmitted] = useState(false);
   const [currentView, setCurrentView] = useState("list");
-  const [limit, setLimit] = useState(5);
+  const [limit, setLimit] = useState(10);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [total, setTotal] = useState(0);
@@ -60,7 +61,7 @@ export function Task() {
       setTotal(taskData.data?.total || 0);
     };
     fetchTask();
-let cView=JSON.parse(localStorage.getItem("currentView") || "list")
+    let cView = JSON.parse(localStorage.getItem("currentView") || "list");
     setCurrentView(cView);
   }, [isFormSubmitted, filter, limit, page]);
 
@@ -81,9 +82,9 @@ let cView=JSON.parse(localStorage.getItem("currentView") || "list")
   }
 
   function onEdit(data) {
-    setOpen(true);
-    setMode("edit");
-    setEditData(data);
+    // setOpen(true);
+    // setMode("edit");
+    // setEditData(data);
   }
 
   async function onDelete(id) {
@@ -115,73 +116,103 @@ let cView=JSON.parse(localStorage.getItem("currentView") || "list")
     if (page < totalPages) setPage(page + 1);
   }
 
- async function statusChange(event,id){
+  async function statusChange(event, id) {
     try {
-      let result=await api.patch(`/task/changeStatus/${id}`,{status:event});
+      let result = await api.patch(`/task/changeStatus/${id}`, {
+        status: event,
+      });
       setIsFormSubmitted(!isFormSubmitted);
       toast.add({
-          title: "Status change successfully",
-        });
+        title: "Status change successfully",
+      });
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
   }
   return (
     <>
       <div className="w-full border-amber-300">
-        <div className="flex justify-between mt-16">
-          <TaskFilterComp onFilterChange={onFilterChange} />
-          <div>
-            <div className="md:flex md:gap-4">
-             
-              <Dialog open={open} onOpenChange={setOpen}>
-                <form>
-                  <DialogTrigger
-                    render={<Button onClick={onOpenCreate}>Add Task</Button>}
-                  />
-                  <DialogContent className="sm:max-w-sm">
-                    <DialogHeader>
-                      <DialogTitle>
-                        {mode == "create" ? "Add Task" : "Edit Task"}
-                      </DialogTitle>
-                    </DialogHeader>
-                    <FieldGroup>
-                      <TaskForm
-                        onSuccess={() => {
-                          setOpen(false);
-                          setMode("create");
-                          setIsFormSubmitted(!isFormSubmitted);
-                        }}
-                        editData={editData}
-                        formMode={mode}
-                      />
-                    </FieldGroup>
-                  </DialogContent>
-                </form>
-              </Dialog>
-            </div>
+        <div className="flex justify-between">
+          <div className="text-start">
+            <p className="text-xl font-bold">Task</p>
+            <p className="text-xs font-light">Keep track of your work</p>
+          </div>
+
+          <div className="">
+            <Button
+              className="bg-indigo-600 text-white px-4"
+              onClick={onOpenCreate}
+            >
+              Add Task
+            </Button>
+            <EditViewTaskDrawer
+              open={open}
+              setOpen={setOpen}
+              mode={mode}
+              setIsFormSubmitted={setIsFormSubmitted}
+              isFormSubmitted={isFormSubmitted}
+            />
+
+            {/* <Dialog open={open} onOpenChange={setOpen}>
+              <form>
+                <DialogTrigger
+                  render={<Button className="bg-indigo-600 text-white px-4" onClick={onOpenCreate}>Add Task</Button>}
+                />
+                <DialogContent className="sm:max-w-sm">
+                  <DialogHeader>
+                    <DialogTitle>
+                      {mode == "create" ? "Add Task" : "Edit Task"}
+                    </DialogTitle>
+                  </DialogHeader>
+                  <FieldGroup>
+
+
+                    <TaskForm
+                      onSuccess={() => {
+                        setOpen(false);
+                        setMode("create");
+                        setIsFormSubmitted(!isFormSubmitted);
+                      }}
+                      editData={editData}
+                      formMode={mode}
+                    />
+                  </FieldGroup>
+                </DialogContent>
+              </form>
+            </Dialog> */}
           </div>
         </div>
-        <div className="mt-4">
-           <ButtonGroup>
-                <Button onClick={() => onChangeView("list")} variant="outline">
-                  List View
-                </Button>
-                <Button onClick={() => onChangeView("grid")} variant="outline">
-                  Grid View
-                </Button>
-              </ButtonGroup>
+        <div className="mt-8">
+          <TaskFilterComp
+            onFilterChange={onFilterChange}
+            onChangeView={onChangeView}
+            currentView={currentView}
+          />
         </div>
         <div>
           {currentView == "list" ? (
             <div className="">
-              <TaskTable data={data} onEdit={onEdit} onDelete={onDelete} total={total} statusChange={statusChange}/>
+              <TaskTable
+                data={data}
+                onEdit={onEdit}
+                onDelete={onDelete}
+                total={total}
+                statusChange={statusChange}
+                isFormSubmitted={isFormSubmitted}
+                setIsFormSubmitted={setIsFormSubmitted}
+              />
             </div>
           ) : (
-            <div className="mt-5">
+            <div className="mt-8">
               <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                 {data.map((x) => (
-                  <TaskCard task={x} key={x._id} />
+                  <TaskCard
+                    task={x}
+                    onView={(task) => console.log("View", task)}
+                    onEdit={(task) => console.log("Edit", task)}
+                    onDelete={(task) => console.log("Delete", task)}
+                  />
+                  // <TaskCard task={x} key={x._id} />
                 ))}
               </div>
             </div>
@@ -201,7 +232,7 @@ let cView=JSON.parse(localStorage.getItem("currentView") || "list")
                 <SelectContent>
                   <SelectGroup>
                     <SelectLabel>Limit</SelectLabel>
-                    {[5,10,15].map((item) => (
+                    {[5, 10, 15].map((item) => (
                       <SelectItem key={item} value={item}>
                         {item}
                       </SelectItem>
@@ -238,7 +269,9 @@ let cView=JSON.parse(localStorage.getItem("currentView") || "list")
               </Pagination>
             </div>
           </div>
-        ):''}
+        ) : (
+          ""
+        )}
       </div>
     </>
   );

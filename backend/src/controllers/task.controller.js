@@ -5,7 +5,14 @@ import httpStatus from "http-status";
 
 class TaskController {
   createTask = asyncHandler(async (req, res) => {
-    let task = await taskService.createTask(req.body);
+    const attachments = req.files?.map((file) => ({
+      originalName: file.originalname,
+      fileName: file.filename,
+      filePath: file.path,
+      mimeType: file.mimetype,
+      size: file.size,
+    })) || [];
+    let task = await taskService.createTask({...req.body,attachments});
     return ApiResponse.success(
       res,
       httpStatus.CREATED,
@@ -15,7 +22,6 @@ class TaskController {
   });
 
   getAllTask = asyncHandler(async (req, res) => {
-    // console.log(req.query, "....params");
     const { searchText, status, priority, limit, page, assignee } = req.query;
     let filter = {};
     if (status) filter.status = status;
@@ -40,7 +46,14 @@ class TaskController {
   });
 
   UpdateTask = asyncHandler(async (req, res) => {
-    let task = await taskService.UpdateTask(req.params.id, req.body);
+    const attachments = req.files?.map((file) => ({
+      originalName: file.originalname,
+      fileName: file.filename,
+      filePath: file.path,
+      mimeType: file.mimetype,
+      size: file.size,
+    })) || [];
+    let task = await taskService.UpdateTask(req.params.id,req.body,attachments);
     return ApiResponse.success(
       res,
       httpStatus.OK,
