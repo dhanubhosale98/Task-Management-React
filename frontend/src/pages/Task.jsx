@@ -52,6 +52,7 @@ export function Task() {
   const [filter, setFilter] = useState({});
 
   useEffect(() => {
+
     const fetchTask = async () => {
       let taskData = await api.get("/task", {
         params: { ...filter, limit, page },
