@@ -1,23 +1,11 @@
-import React, { useEffect, useState } from "react";
-import { TaskForm } from "@/components/TaskForm";
+import React, { useEffect, useState, useRef } from "react";
 import { TaskCard } from "@/components/TaskCard";
 import { ButtonGroup } from "@/components/ui/button-group";
 
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/toast";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-
-import { FieldGroup } from "@/components/ui/field";
 import { TaskTable } from "@/components/TaskTable";
-import { TaskFilterComp } from "@/components/TaskFilterComp";
-import api from "@/api/api";
 
 import {
   Pagination,
@@ -36,6 +24,29 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
+import { List, Grid2X2 } from "lucide-react";
+import { Field, FieldLabel } from "@/components/ui/field";
+import api from "@/api/api";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
+import { Search } from "lucide-react";
+const priorityArr = [
+  { label: "All", value: "" },
+  { label: "LOW", value: "LOW" },
+  { label: "MEDIUM", value: "MEDIUM" },
+  { label: "HIGH", value: "HIGH" },
+];
+
+const statusArr = [
+  { label: "All", value: "" },
+  { label: "TODO", value: "TODO" },
+  { label: "IN_PROGRESS", value: "IN_PROGRESS" },
+  { label: "COMPLETED", value: "COMPLETED" },
+];
 import { EditViewTaskDrawer } from "@/components/editViewTask";
 export function Task() {
   const [open, setOpen] = useState(false);
@@ -48,44 +59,64 @@ export function Task() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [total, setTotal] = useState(0);
+  const [searchText, setSearchText] = useState("");
+  const [priority, setPriority] = useState("");
+  const [status, setStatus] = useState("");
+  const inputRef = useRef("");
+  const [assigneeDrp, setAssigneeDrp] = useState([]);
+  const [selectedAssignee, setSelectedAssignee] = useState("");
 
-  const [filter, setFilter] = useState({});
+  const [filter, setFilter] = useState({
+    page,
+    limit,
+    searchText,
+    priority,
+    status,
+    assignee: selectedAssignee,
+  });
+  const fetchTask = async () => {
+    console.log("called");
+    let taskData = await api.get("/task", {
+      params: {
+        page,
+        limit,
+        searchText,
+        priority,
+        status,
+        assignee: selectedAssignee,
+      },
+    });
+    setData(taskData.data.data);
+    setTotalPages(Math.ceil(taskData.data.total / limit));
+    setTotal(taskData.data?.total || 0);
+  };
 
   useEffect(() => {
-
-    const fetchTask = async () => {
-      let taskData = await api.get("/task", {
-        params: { ...filter, limit, page },
-      });
-      setData(taskData.data.data);
-      setTotalPages(Math.ceil(taskData.data.total / limit));
-      setTotal(taskData.data?.total || 0);
-    };
     fetchTask();
     let cView = JSON.parse(localStorage.getItem("currentView") || "list");
     setCurrentView(cView);
-  }, [isFormSubmitted, filter, limit, page]);
-
-  function onFilterChange(filterData) {
-    setPage(1);
-    setFilter(filterData);
-  }
+  }, [
+    isFormSubmitted,
+    page,
+    limit,
+    searchText,
+    priority,
+    status,
+    selectedAssignee,
+  ]);
 
   function onChangeLimit(limit) {
     setLimit(limit);
-
-    console.log(limit);
     if (Math.ceil(total / limit) < page) setPage(Math.ceil(total / limit));
   }
 
   function onChangePage(page) {
+        console.log("on filter chnage called")
     setPage(page);
   }
 
   function onEdit(data) {
-    // setOpen(true);
-    // setMode("edit");
-    // setEditData(data);
+    
   }
 
   async function onDelete(id) {
@@ -153,42 +184,135 @@ export function Task() {
               setIsFormSubmitted={setIsFormSubmitted}
               isFormSubmitted={isFormSubmitted}
             />
-
-            {/* <Dialog open={open} onOpenChange={setOpen}>
-              <form>
-                <DialogTrigger
-                  render={<Button className="bg-indigo-600 text-white px-4" onClick={onOpenCreate}>Add Task</Button>}
-                />
-                <DialogContent className="sm:max-w-sm">
-                  <DialogHeader>
-                    <DialogTitle>
-                      {mode == "create" ? "Add Task" : "Edit Task"}
-                    </DialogTitle>
-                  </DialogHeader>
-                  <FieldGroup>
-
-
-                    <TaskForm
-                      onSuccess={() => {
-                        setOpen(false);
-                        setMode("create");
-                        setIsFormSubmitted(!isFormSubmitted);
-                      }}
-                      editData={editData}
-                      formMode={mode}
-                    />
-                  </FieldGroup>
-                </DialogContent>
-              </form>
-            </Dialog> */}
           </div>
         </div>
         <div className="mt-8">
-          <TaskFilterComp
-            onFilterChange={onFilterChange}
-            onChangeView={onChangeView}
-            currentView={currentView}
-          />
+          <div className="w-full">
+            <div className="grid grid-cols-12 gap-4">
+              {/* 3 columns */}
+              <div className="col-span-12 lg:col-span-3 ">
+                <Field>
+                  
+                  <Field>
+                    <InputGroup>
+                      <InputGroupInput
+                        id="input-group-url"
+                        placeholder="Type to search..."
+                        ref={inputRef}
+                        onInput={(event) => {setSearchText(event.target.value);setPage(1)}}
+                      />
+
+                      <InputGroupAddon align="inline-start">
+                        <Search size={20} />{" "}
+                      </InputGroupAddon>
+                    </InputGroup>
+                  </Field>
+                </Field>
+              </div>
+
+              {/* 9 columns */}
+              <div className="col-span-12 lg:col-span-9 ">
+                <div className="flex justify-end lg:gap-4 gap-3">
+                  <Select
+                    items={priorityArr}
+                    value={priority}
+                    onValueChange={(event) => {
+                      console.log(event);
+                      setPriority(event);
+                      setPage(1)
+                    }}
+                  >
+                    <SelectTrigger className="w-30">
+                      <SelectValue placeholder="Priority" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {priorityArr.map((item) => (
+                          <SelectItem key={item.value} value={item.value}>
+                            {item.label}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  <Select
+                    items={statusArr}
+                    value={status}
+                    onValueChange={(event) => {
+                      console.log(event);
+                      setStatus(event);
+                      setPage(1)
+                    }}
+                  >
+                    <SelectTrigger className="w-30">
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        {statusArr.map((item) => (
+                          <SelectItem key={item.value} value={item.value}>
+                            {item.label}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  <Select
+                    items={assigneeDrp}
+                    value={selectedAssignee}
+                    onValueChange={(event) => {
+                      console.log(event);
+                      setSelectedAssignee(event);
+                      setPage(1)
+                    }}
+                  >
+                    <SelectTrigger className="w-30">
+                      <SelectValue placeholder="Assignee">
+                        {
+                          assigneeDrp.filter(
+                            (x) => x._id == selectedAssignee,
+                          )[0]?.firstName
+                        }
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem value={""}>All</SelectItem>
+                        {assigneeDrp.map((item) => (
+                          <SelectItem key={item._id} value={item._id}>
+                            {item.firstName}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  
+                  <ButtonGroup>
+                    <Button
+                      onClick={() => onChangeView("list")}
+                      className={
+                        currentView == "list"
+                          ? "bg-indigo-600 text-white hover:bg-indigo-600"
+                          : "bg-gray-800 text-white hover:bg-gray-800"
+                      }
+                    >
+                      <List size={16} /> List
+                    </Button>
+                    <Button
+                      onClick={() => onChangeView("grid")}
+                      className={
+                        currentView == "grid"
+                          ? "bg-indigo-600 text-white hover:bg-indigo-600"
+                          : "bg-gray-800 text-white hover:bg-gray-800"
+                      }
+                    >
+                      <Grid2X2 size={16} /> Grid
+                    </Button>
+                  </ButtonGroup>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
         <div>
           {currentView == "list" ? (
@@ -213,7 +337,6 @@ export function Task() {
                     onEdit={(task) => console.log("Edit", task)}
                     onDelete={(task) => console.log("Delete", task)}
                   />
-                  // <TaskCard task={x} key={x._id} />
                 ))}
               </div>
             </div>

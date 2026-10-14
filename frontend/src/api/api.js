@@ -49,7 +49,7 @@ api.interceptors.response.use(
       try {
         // Mark request as already retried
         originalRequest._retry = true;
-
+        console.log("random console", originalRequest);
         // Call refresh token API
         const result = await refreshApi.get("/auth/getAccessToken");
 
