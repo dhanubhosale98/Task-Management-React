@@ -42,7 +42,7 @@ class TaskService {
       // Delete physical files
       for (const attachment of filesToDelete) {
         const filePath = path.resolve(attachment.filePath);
-        console.log(filePath,"...file path");
+        console.log(filePath, "...file path");
         try {
           await fs.unlink(filePath);
           console.log("file deleted successfully");
@@ -88,4 +88,3 @@ class TaskService {
 }
 
 export default new TaskService();
-

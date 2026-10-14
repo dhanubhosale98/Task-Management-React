@@ -24,13 +24,14 @@ function App() {
         {/* Layout is the parent */}
         <Route element={<AuthGaurd><Layout /></AuthGaurd>}>
           {/* / → /tasks */}
-          <Route path="/" element={<Navigate to="/tasks" replace />} />
+         
 
           {/* Dashboard */}
           <Route path="/dashboard" element={<Dashboard />} />
 
           {/* Tasks */}
           <Route path="/tasks" element={<Task />} />
+           <Route path="/" element={<Navigate to="/tasks" replace />} />
 
           {/* Unknown route */}
           <Route path="*" element={<Navigate to="/dashboard" replace />} />

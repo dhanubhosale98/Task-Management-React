@@ -60,7 +60,7 @@ export function Login() {
                 </Field>
                 <Field>
                   <Label htmlFor="password">Password</Label>
-                  <Input
+                  <Input type="password"
                     {...register("password", {
                       required: "password Required",
                     })}
